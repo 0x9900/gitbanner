@@ -49,7 +49,7 @@ def is_pushday(filename, today=datetime.now().date()):
   number_of_days = len(message) * len(message[0])
   day = (today - start_date).days
   try:
-    push = True if message[day % 7][day / len(message)] == '*' else False
+    push = True if message[day % 7][day / len(message)] == '#' else False
   except IndexError:
     raise StandardError('The banner is fully printed')
 
