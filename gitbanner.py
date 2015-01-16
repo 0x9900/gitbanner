@@ -35,6 +35,9 @@ def is_pushday(filename, today=datetime.now().date()):
   except ValueError as err:
     raise StandardError(err)
 
+  if today < start_date:
+    raise StandardError('Today is before start date')
+
   message = banner['message'].splitlines()
   # Check for the number of lines and the length of all the lines.
   if len(message) != 7:
@@ -42,24 +45,29 @@ def is_pushday(filename, today=datetime.now().date()):
   if not all([len(message[0]) == len(l) for l in message[1:]]):
     raise StandardError('All the lines must have the same length')
 
-  # Build the data structure.
-  commit = {}
-  number_of_days = len(message[0]) * 7
+  # Is today a push day?
+  number_of_days = len(message) * len(message[0])
   day = (today - start_date).days
-  push = True if message[day % 7][day / len(message)] == '*' else False
+  try:
+    push = True if message[day % 7][day / len(message)] == '*' else False
+  except IndexError:
+    raise StandardError('The banner is fully printed')
 
   return (push, day, number_of_days)
 
 
 def main():
-  push, day, days_left = is_pushday(BANNER_INFO_FILE)
-  msg = "Push: %s, Day: %s, Days left: %s" % (push, day, days_left)
+  try:
+    push, day, days_left = is_pushday(BANNER_INFO_FILE)
+  except StandardError as err:
+    print err
+    sys.exit(os.EX_OSERR)
 
+  msg = "Push: %s, Day: %s, Days left: %s" % (push, day, days_left)
   try:
     with open(DATAFILE, 'a') as fdout:
       fdout.write(msg)
       fdout.write('\n')
-
   except IOError as err:
     print err
   else:
