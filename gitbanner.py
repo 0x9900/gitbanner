@@ -8,13 +8,14 @@ import subprocess
 import sys
 import yaml
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 BANNER_INFO_FILE = 'banner.yaml'
 DATAFILE = 'commits.dat'
 SUNDAY = 6
 
-def build_banner_data(filename):
+def is_pushday(filename, today=datetime.now().date()):
+
   try:
     with open('banner.yaml') as fdin:
       banner = yaml.load(fdin)
@@ -28,6 +29,7 @@ def build_banner_data(filename):
 
   try:
     start_date = datetime.strptime(banner['start_date'], '%m/%d/%Y')
+    start_date = start_date.date()
     if start_date.weekday() != SUNDAY:
       raise ValueError('The date must start on a sunday')
   except ValueError as err:
@@ -43,28 +45,27 @@ def build_banner_data(filename):
   # Build the data structure.
   commit = {}
   number_of_days = len(message[0]) * 7
-  for day in range(number_of_days):
-    date = start_date + timedelta(days=day)
-    push = True if message[day % 7][day / len(message)] == '*' else False
-    commit[date.date()] = push
+  day = (today - start_date).days
+  push = True if message[day % 7][day / len(message)] == '*' else False
 
-  return commit
+  return (push, day, number_of_days)
 
 
 def main():
-  commit_data = build_banner_data(BANNER_INFO_FILE)
-  today = datetime.now().date()
+  push, day, days_left = is_pushday(BANNER_INFO_FILE)
+  msg = "Push: %s, Day: %s, Days left: %s" % (push, day, days_left)
 
   try:
     with open(DATAFILE, 'a') as fdout:
-      fdout.write("%s - %s\n" % (today, commit_data[today]))
+      fdout.write(msg)
+      fdout.write('\n')
 
   except IOError as err:
     print err
   else:
-    if commit_data.get(today, False):
+    if push:
       command = lambda cmd: subprocess.check_call(shlex.split(cmd))
-      command('git commit -am "Last update: %s"' % today)
+      command('git commit -am "%s"' % msg )
       command('git push origin')
 
 
