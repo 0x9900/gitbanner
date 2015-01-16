@@ -3,6 +3,7 @@
 # Fred C. <github-fred@hidzz.com>
 #
 import os
+import shlex
 import subprocess
 import sys
 import yaml
@@ -53,16 +54,18 @@ def build_banner_data(filename):
 def main():
   commit_data = build_banner_data(BANNER_INFO_FILE)
   today = datetime.now().date()
-  if today not in commit_data:
-    print 'Nothing to commit for today: %s' % today
-    sys.exit(os.EX_OK)
 
-  with open(DATAFILE, 'a') as fdout:
-    fdout.write("%s - %s" % today, commit_data[today])
+  try:
+    with open(DATAFILE, 'a') as fdout:
+      fdout.write("%s - %s\n" % (today, commit_data[today]))
 
-  command = lambda cmd: subprocess.check_call(shlex.split(cmd))
-  command('git commit -am "Last update: %s"' % today)
-  command('git push origin')
+  except IOError as err:
+    print err
+  else:
+    if commit_data.get(today, False):
+      command = lambda cmd: subprocess.check_call(shlex.split(cmd))
+      command('git commit -am "Last update: %s"' % today)
+      command('git push origin')
 
 
 if __name__ == '__main__':
