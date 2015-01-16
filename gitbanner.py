@@ -35,9 +35,6 @@ def is_pushday(filename, today=datetime.now().date()):
   except ValueError as err:
     raise StandardError(err)
 
-  if today < start_date:
-    raise StandardError('Today is before start date')
-
   message = banner['message'].splitlines()
   # Check for the number of lines and the length of all the lines.
   if len(message) != 7:
@@ -46,6 +43,9 @@ def is_pushday(filename, today=datetime.now().date()):
     raise StandardError('All the lines must have the same length')
 
   # Is today a push day?
+  if today < start_date:
+    raise StandardError('Today is before start date')
+
   number_of_days = len(message) * len(message[0])
   day = (today - start_date).days
   try:
