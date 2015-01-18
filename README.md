@@ -15,4 +15,4 @@ starting date.
 
 Run `gitbanner.py` at least once a day in cron and be patient, really
 patient. It will take 329 days to print the world **0x9900** shown in
-the example `banner.yaml`
+the example `banner.yaml`.
