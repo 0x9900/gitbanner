@@ -6,6 +6,7 @@ import os
 import shlex
 import subprocess
 import sys
+import tempfile
 import yaml
 
 from datetime import datetime
@@ -13,6 +14,11 @@ from datetime import datetime
 BANNER_INFO_FILE = 'banner.yaml'
 DATAFILE = 'commits.dat'
 SUNDAY = 6
+HEADER = """#
+# This file will be changed just to have something to commit.
+# Last update: %s
+#
+"""
 
 def is_pushday(filename, today=datetime.now().date()):
 
@@ -65,12 +71,27 @@ def main():
 
   msg = "Push: %s, Day: %s, Days left: %s" % (push, day, days_left)
   try:
-    with open(DATAFILE, 'a') as fdout:
-      fdout.write(msg)
-      fdout.write('\n')
+    with tempfile.TemporaryFile() as fdtmp:
+      fdtmp.write(HEADER % datetime.now())
+      fdtmp.write(msg)
+      fdtmp.write('\n')
+      # copy the content of the old DATAFILE into the tmpfile.
+      with open(DATAFILE, 'r') as fdin:
+        for line in fdin:
+          if line.startswith('#'):
+            continue
+          fdtmp.write(line)
+
+      # copy the content of the tmpfile into the new datafile.
+      fdtmp.seek(0)
+      with open(DATAFILE, 'w') as fdout:
+        for line in fdtmp:
+          fdout.write(line)
+
   except IOError as err:
     print err
   else:
+    # send everything to github.com if it's a 'commit' day.
     if push:
       command = lambda cmd: subprocess.check_call(shlex.split(cmd))
       command('git commit -am "%s"' % msg )
