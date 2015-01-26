@@ -69,7 +69,7 @@ def main():
     print err
     sys.exit(os.EX_OSERR)
 
-  msg = "Push: %s, Day: %s, Days left: %s" % (push, day, days_left)
+  msg = "Push: %s, Day: %s, Days left: %s" % (push, day, days_left - day)
   try:
     with tempfile.TemporaryFile() as fdtmp:
       fdtmp.write(HEADER % datetime.now())
